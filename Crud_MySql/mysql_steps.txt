@@ -1,0 +1,108 @@
+create database naresh;
+
+GRANT ALL PRIVILEGES ON `naresh`.* TO 'datab'@'localhost';
+
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    username VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    password VARCHAR(255) NOT NULL
+);
+
+
+
+CREATE TABLE student (
+    roll_no INT PRIMARY KEY,
+    student_name VARCHAR(100) NOT NULL,
+    gender VARCHAR(10),
+    10th_mark FLOAT,
+    12th_mark FLOAT
+);
+
+
+CREATE TABLE student_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    roll_no INT,
+    student_name VARCHAR(255),
+    gender VARCHAR(10),
+    10th_mark INT,
+    12th_mark INT,
+    Action VARCHAR(10),
+    DateTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+=======================================
+
+-- Create or replace the trigger if it already exists
+DROP TRIGGER IF EXISTS student_logs_trigger;
+
+DELIMITER //
+
+CREATE TRIGGER student_logs_trigger AFTER INSERT, UPDATE, DELETE ON student
+FOR EACH ROW
+BEGIN
+    -- Action: Inserted, Updated, or Deleted
+    DECLARE action VARCHAR(10);
+
+    IF (INSERTING()) THEN
+        SET action = 'Inserted';
+    ELSEIF (UPDATING()) THEN
+        SET action = 'Updated';
+    ELSEIF (DELETING()) THEN
+        SET action = 'Deleted';
+    END IF;
+
+    -- Insert into student_logs table
+    INSERT INTO student_logs (roll_no, student_name, gender, 10th_mark, 12th_mark, Action, DateTime)
+    VALUES (NEW.roll_no, NEW.student_name, NEW.gender, NEW.10th_mark, NEW.12th_mark, action, NOW());
+END //
+
+DELIMITER ;
+
+================================================
+
+
+
+DELIMITER //
+CREATE TRIGGER student_insert_trigger
+AFTER INSERT ON naresh.student
+FOR EACH ROW
+BEGIN
+    INSERT INTO naresh.student_logs (roll_no, student_name, gender, 10th_mark, 12th_mark, action, datetime)
+    VALUES (NEW.roll_no, NEW.student_name, NEW.gender, NEW.10th_mark, NEW.12th_mark, 'INSERT', CURRENT_TIMESTAMP);
+END;
+//
+DELIMITER ;
+
+
+============================================
+
+
+
+DELIMITER //
+CREATE TRIGGER student_update_trigger
+AFTER UPDATE ON naresh.student
+FOR EACH ROW
+BEGIN
+    INSERT INTO naresh.student_logs (roll_no, student_name, gender, 10th_mark, 12th_mark, action, datetime)
+    VALUES (NEW.roll_no, NEW.student_name, NEW.gender, NEW.10th_mark, NEW.12th_mark, 'UPDATE', CURRENT_TIMESTAMP);
+END;
+//
+DELIMITER ;
+=============================================
+
+
+DELIMITER //
+CREATE TRIGGER student_delete_trigger
+AFTER DELETE ON naresh.student
+FOR EACH ROW
+BEGIN
+    INSERT INTO naresh.student_logs (roll_no, student_name, gender, 10th_mark, 12th_mark, action, datetime)
+    VALUES (OLD.roll_no, OLD.student_name, OLD.gender, OLD.10th_mark, OLD.12th_mark, 'DELETE', CURRENT_TIMESTAMP);
+END;
+//
+DELIMITER ;
