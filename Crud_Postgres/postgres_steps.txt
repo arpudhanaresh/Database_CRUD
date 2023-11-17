@@ -1,0 +1,82 @@
+create database naresh;
+
+CREATE TABLE student (
+    roll_no SERIAL PRIMARY KEY,
+    student_name VARCHAR(100) NOT NULL,
+    gender VARCHAR(10),
+    sslc_mark INTEGER,
+    hsc_mark INTEGER
+);
+
+
+GRANT USAGE, SELECT ON SEQUENCE student_roll_no_seq TO datab;
+GRANT INSERT ON TABLE student TO datab;
+GRANT USAGE, SELECT ON ALL TABLES IN SCHEMA public TO datab;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE student TO datab;
+GRANT USAGE, SELECT ON SEQUENCE student_roll_no_seq TO datab;
+
+
+
+CREATE TABLE student_logs (
+    log_id SERIAL PRIMARY KEY,
+    roll_no INTEGER,
+    name VARCHAR(255),
+    gender VARCHAR(10),
+    sslc INTEGER,
+    hsc INTEGER,
+    action VARCHAR(10),
+    action_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+GRANT USAGE, SELECT ON SEQUENCE student_logs_log_id_seq TO datab;
+
+
+
+-- Trigger for Insert
+CREATE OR REPLACE FUNCTION student_insert_trigger()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO student_logs (roll_no, name, gender, sslc, hsc, action)
+    VALUES (NEW.roll_no, NEW.student_name, NEW.gender, NEW.sslc_mark, NEW.hsc_mark, 'insert');
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER student_insert
+AFTER INSERT ON student
+FOR EACH ROW
+EXECUTE FUNCTION student_insert_trigger();
+
+
+-- Trigger for Update
+CREATE OR REPLACE FUNCTION student_update_trigger()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO student_logs (roll_no, name, gender, sslc, hsc, action)
+    VALUES (NEW.roll_no, NEW.student_name, NEW.gender, NEW.sslc_mark, NEW.hsc_mark, 'update');
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER student_update
+AFTER UPDATE ON student
+FOR EACH ROW
+EXECUTE FUNCTION student_update_trigger();
+
+
+-- Trigger for Delete
+CREATE OR REPLACE FUNCTION student_delete_trigger()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO student_logs (roll_no, name, gender, sslc, hsc, action)
+    VALUES (OLD.roll_no, OLD.student_name, OLD.gender, OLD.sslc_mark, OLD.hsc_mark, 'delete');
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER student_delete
+AFTER DELETE ON student
+FOR EACH ROW
+EXECUTE FUNCTION student_delete_trigger();
+
